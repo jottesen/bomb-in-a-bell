@@ -1,0 +1,42 @@
+thisChunk = "deusarBYU5"
+require_relative 'Login'
+require_relative 'Logger'
+require_relative 'AssessmentRunner'
+require_relative 'Prompt'
+require_relative 'LogController'
+
+ca, cr = prompt()
+#ca, cr = false, false
+
+print("Test Start Time: " + Time.now().to_s + "\n")
+b = login('http://test.mtc.byu.edu/assessmenttools','jottesen','Eugosto' + thisChunk)
+Watir.default_timeout = 300
+
+# Click Through the Main List
+ind = 0
+assessmentMain = b.link(:class => 'navBranch', :index => ind)
+mainURL = b.url
+
+while (assessmentMain.exists? == true && assessmentMain.visible? == true) do
+	if assessmentMain.href == "http://test.mtc.byu.edu/assessmenttools/homeCurrentAssessments.action#" #Check for Javascript
+		hideInd = 0
+		assessmentMain.click
+		assessmentSub = b.div(:id => 'secpd').link(:index => hideInd)
+		while assessmentSub.exists? == true
+			assessmentSub.click
+			assessmentRunner(b, ca, cr) #Go take the assessment then return to the main page
+			Watir::Wait.until {(b.url == mainURL) || (b.url == (mainURL + "#"))}
+			assessmentMain.click
+			hideInd = hideInd + 1
+			assessmentSub = b.div(:id => 'secpd').link(:index => hideInd)
+		end	
+	else
+		assessmentMain.click
+		assessmentRunner(b, ca, cr) #Go take the assessment then return to the main page
+		Watir::Wait.until {b.url == mainURL || (b.url == (mainURL + "#"))}
+	end	
+	print("Completed Tests for Assessments in Index Number: " + ind.to_s + "\n")
+	ind = ind + 1
+	assessmentMain = b.link(:class => 'navBranch', :index => ind)
+end
+print("Test End Time: " + Time.now().to_s + "\n")
